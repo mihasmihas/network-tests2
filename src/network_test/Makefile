@@ -28,6 +28,7 @@ include ../../config
 FILES_COMMON=\
 	tests_common.o
 
+
 FILES_TEST2=\
 	all_to_all2.o\
 	async_one_to_one2.o\
@@ -42,19 +43,57 @@ FILES_TEST2=\
 	put2.o\
 	parse_arguments.o
 
+
+
+FILES_TEST2_SO=\
+	all_to_all2.so\
+	async_one_to_one2.so\
+	one_to_one2.so\
+	send_recv_and_recv_send2.so\
+	test_noise2.so\
+	test_noise_blocking2.so\
+	bcast2.so\
+	get2.so\
+	put2.so
+
+
+LFILES_TEST2_SO=\
+	-lall_to_all2\
+	-lasync_one_to_one2\
+	-lone_to_one2\
+	-lsend_recv_and_recv_send2\
+	-ltest_noise2\
+	-ltest_noise_blocking2\
+	-lbcast2\
+	-lget2\
+	-lput2
+
 FILES_PRINT_FROM_TO=\
 	print_from_to.o
 
-EXECS= print_from_to convert_to_netcdf network_test2
+
+EXECS=  print_from_to convert_to_netcdf network_test2
 
 all: $(EXECS)
+	
 
-network_test2: $(FILES_TEST2) $(FILES_COMMON)
-	$(MPI_CCLINKER) $(MPI_CCLINKER_FLAGS) $(MPI_LIB_PATH) $(NETCDF_INCLUDE) -L ../core -o network_test2 $(FILES_COMMON) $(FILES_TEST2) $(MPI_LIBS) -lparus_network  -lnetcdf -lm
+
+create_dir:
+	if ![ -d $(INSTALL_DIR)/lib/din ]; then 
+	mkdir $(INSTALL_DIR)/lib/din
+
+network_test2: $(FILES_TEST2) $(FILES_TEST2_SO) create_ld_library_path $(FILES_COMMON)
+	$(MPI_CCLINKER) $(MPI_CCLINKER_FLAGS) $(MPI_LIB_PATH) $(NETCDF_INCLUDE) -L ../core -o network_test2 $(FILES_COMMON) network_test2.o  parse_arguments.o test_noise_common.o  -L$(INSTALL_DIR)/lib/din   $(LFILES_TEST2_SO) $(MPI_LIBS)   -lparus_network  -lnetcdf -lm -ldl
+
 
 
 print_from_to: $(FILES_PRINT_FROM_TO)
 	$(CXXLINKER) $(CXXLINKER_FLAGS) $(MPI_LIB_PATH) $(NETCDF_INCLUDE) -L ../core -o print_from_to $(FILES_PRINT_FROM_TO) $(MPI_LIBS) -lnetcdf
+
+create_ld_library_path: 
+	LD_LIBRARY_PATH=$(INSTALL_DIR)/lib/din:${LD_LIBRARY_PATH}
+	export LD_LIBRARY_PATH
+
 
 convert_to_netcdf: convert_to_netcdf.o $(FILES_COMMON)
 	$(MPI_CXXLINKER) $(MPI_CXXLINKER_FLAGS) $(MPI_LIB_PATH) -L ../core -o  convert_to_netcdf convert_to_netcdf.o ../core/string_id_converters.o  $(FILES_COMMON) $(MPI_LIBS) -lparus_network -lnetcdf
@@ -63,12 +102,17 @@ convert_to_netcdf: convert_to_netcdf.o $(FILES_COMMON)
 clean:
 	rm  -f ./*.o
 	rm  -f $(EXECS)
+	rm  $(INSTALL_DIR)/lib/din/*.so
 
 install: all
 	cp -rf $(EXECS) $(INSTALL_DIR)/bin/
+	
 
 %.o: %.c
-	$(MPI_CC) $(MPI_CC_FLAGS) $(MPI_CC_INCLUDE) -I ../core -I ../.. -c $^ -o $@
+	$(MPI_CC) $(MPI_CC_FLAGS)  $(MPI_CC_INCLUDE) -I ../core -I ../.. -fPIC -c $^ -o $@
 
 %.o: %.cpp
-	$(MPI_CXX) $(MPI_CXX_FLAGS) $(MPI_CXX_INCLUDE) -I ../core -I ../.. -c $^ -o $@
+	$(MPI_CXX) $(MPI_CXX_FLAGS) $(MPI_CXX_INCLUDE) -I ../core -I ../.. -fPIC -c $^ -o $@
+
+%.so: %.o
+	$(MPI_CC) -I ../core -I ../..  -shared $^ -o     $(INSTALL_DIR)/lib/din/lib$@ 

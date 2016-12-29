@@ -38,7 +38,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <stdio.h>
-
+#include <dlfcn.h>
 
 #ifdef _GNU_SOURCE
 #include <getopt.h>
@@ -66,7 +66,7 @@ int comm_rank;
 int main(int argc,char **argv)
 {
     MPI_Status status;
-
+    void *din_library;
     Test_time_result_type *times=NULL; /* old px_my_time_type *times=NULL;*/
 
     /*
@@ -349,15 +349,78 @@ int main(int argc,char **argv)
     {
         if(test_parameters.test_type==ALL_TO_ALL_TEST_TYPE)
         {
-            all_to_all(times,tmp_mes_size,test_parameters.num_repeats);
+	 /*  void *din_library;
+	   extern int (*all_to_all)(Test_time_result_type *times,int mes_length,int num_repeats);
+	   din_library = dlopen("$(INSTALL_DIR)/lib/din/liball_to_all2.so",RTLD_LAZY);
+	   if (!din_library){
+		//если ошибка, то вывести ее на экран
+		fprintf(stderr,"dlopen() error: %s\n", dlerror());
+ 		MPI_Abort(MPI_COMM_WORLD,-1)
+		return 1;
+		}
+	   all_to_all =dlsym(din_library,"all_to_all");
+           (*all_to_all)(times,tmp_mes_size,test_parameters.num_repeats);
+	   dlclose(din_library);
+		*/
+		all_to_all(times,tmp_mes_size,test_parameters.num_repeats);
         }
         if(test_parameters.test_type==BCAST_TEST_TYPE)
         {
+
+		
+/*
+	int (* bcast)(Test_time_result_type *times,int mes_length,int num_repeats);
+		char *HOME = getenv("INSTALL_DIR");
+	   	din_library = dlopen(("%s/lib/din/lib bcast2.so",HOME),RTLD_LAZY);
+	   	if (!din_library){
+			//если ошибка, то вывести ее на экран
+			fprintf(stderr,"dlopen() error: %s\n", dlerror());
+ 			MPI_Abort(MPI_COMM_WORLD,-1);
+			return 1;
+		}
+	   	async_one_to_one =dlsym(din_library," bcast");
+		if (! bcast){
+			//если ошибка, то вывести ее на экран
+			fprintf(stderr,"dlopen() error: %s\n", dlerror());
+ 			MPI_Abort(MPI_COMM_WORLD,-1);
+			return 1;
+		}
+           	(* bcast)(times,tmp_mes_size,test_parameters.num_repeats);*/
+
+
             bcast(times,tmp_mes_size,test_parameters.num_repeats);
         }
 
         if(test_parameters.test_type==NOISE_BLOCKING_TEST_TYPE)
         {
+
+
+/*
+		void *din_library;
+	  	int (*test_noise_blocking)(Test_time_result_type *times,int mes_length, int num_repeats, int num_noise_repeats, int noise_message_length, int num_noise_procs);
+		char *HOME = getenv("INSTALL_DIR");
+	   	din_library = dlopen(("%s/lib/din/libtest_noise_blocking2.so",HOME),RTLD_LAZY);
+	   	if (!din_library){
+			//если ошибка, то вывести ее на экран
+			fprintf(stderr,"dlopen() error: %s\n", dlerror());
+ 			MPI_Abort(MPI_COMM_WORLD,-1);
+			return 1;
+		}
+	   	
+                test_noise_blocking =dlsym(din_library,"test_noise_blocking");
+           	(*test_noise_blocking)(
+			 	times,
+				tmp_mes_size, 
+				test_parameters.num_repeats, 
+				test_parameters.num_noise_messages, 
+				test_parameters.noise_message_length,
+				test_parameters.num_noise_procs
+			);
+	   	dlclose(din_library);
+
+*/
+
+
                 test_noise_blocking
 		(
 		 	times,
@@ -371,6 +434,33 @@ int main(int argc,char **argv)
 
         if(test_parameters.test_type==NOISE_TEST_TYPE)
         {
+
+
+/*
+		void *din_library;
+	  	int (*test_noise)(Test_time_result_type *times,int mes_length, int num_repeats, int num_noise_repeats, int noise_message_length, int num_noise_procs);
+		char *HOME = getenv("INSTALL_DIR");
+	   	din_library = dlopen(("%s/lib/din/libtest_noise2.so",HOME),RTLD_LAZY);
+	   	if (!din_library){
+			//если ошибка, то вывести ее на экран
+			fprintf(stderr,"dlopen() error: %s\n", dlerror());
+ 			MPI_Abort(MPI_COMM_WORLD,-1);
+			return 1;
+		}
+	   	test_noise =dlsym(din_library,"test_noise");
+           	(*test_noise)(
+			 	times,
+				tmp_mes_size, 
+				test_parameters.num_repeats, 
+				test_parameters.num_noise_messages, 
+				test_parameters.noise_message_length,
+				test_parameters.num_noise_procs
+			);
+	   	dlclose(din_library);
+
+*/
+
+
             		test_noise
 			(
 			 	times,
@@ -384,16 +474,80 @@ int main(int argc,char **argv)
 
         if(test_parameters.test_type==ONE_TO_ONE_TEST_TYPE)
         {
-            one_to_one(times,tmp_mes_size,test_parameters.num_repeats);
+	/*
+	  	int (*one_to_one)(Test_time_result_type *times,int mes_length,int num_repeats);
+		char *HOME = getenv("INSTALL_DIR");
+	   	din_library = dlopen(("%s/lib/din/libone_to_one2.so",HOME),RTLD_LAZY);
+	   	if (!din_library){
+			//если ошибка, то вывести ее на экран
+			fprintf(stderr,"dlopen() error: %s\n", dlerror());
+ 			MPI_Abort(MPI_COMM_WORLD,-1);
+			return 1;
+		}
+	   	one_to_one =dlsym(din_library,"one_to_one");
+		if (!one_to_one){
+			//если ошибка, то вывести ее на экран
+			fprintf(stderr,"dlopen() error: %s\n", dlerror());
+ 			MPI_Abort(MPI_COMM_WORLD,-1);
+			return 1;
+		}
+           	(*one_to_one)(times,tmp_mes_size,test_parameters.num_repeats);
+	   	
+*/
+
+           one_to_one(times,tmp_mes_size,test_parameters.num_repeats);
         } /* end one_to_one */
 
         if(test_parameters.test_type==ASYNC_ONE_TO_ONE_TEST_TYPE)
         {
+
+/*
+	int (*async_one_to_one)(Test_time_result_type *times,int mes_length,int num_repeats);
+		char *HOME = getenv("INSTALL_DIR");
+	   	din_library = dlopen(("%s/lib/din/libasync_one_to_one2.so",HOME),RTLD_LAZY);
+	   	if (!din_library){
+			//если ошибка, то вывести ее на экран
+			fprintf(stderr,"dlopen() error: %s\n", dlerror());
+ 			MPI_Abort(MPI_COMM_WORLD,-1);
+			return 1;
+		}
+	   	async_one_to_one =dlsym(din_library,"async_one_to_one");
+		if (!async_one_to_one){
+			//если ошибка, то вывести ее на экран
+			fprintf(stderr,"dlopen() error: %s\n", dlerror());
+ 			MPI_Abort(MPI_COMM_WORLD,-1);
+			return 1;
+		}
+           	(*async_one_to_one)(times,tmp_mes_size,test_parameters.num_repeats);*/
+
             async_one_to_one(times,tmp_mes_size,test_parameters.num_repeats);
         } /* end async_one_to_one */
 
         if(test_parameters.test_type==SEND_RECV_AND_RECV_SEND_TEST_TYPE)
         {
+
+
+/*
+	int (*send_recv_and_recv_send)(Test_time_result_type *times,int mes_length,int num_repeats);
+		char *HOME = getenv("INSTALL_DIR");
+	   	din_library = dlopen(("%s/lib/din/libsend_recv_and_recv_send2.so",HOME),RTLD_LAZY);
+	   	if (!din_library){
+			//если ошибка, то вывести ее на экран
+			fprintf(stderr,"dlopen() error: %s\n", dlerror());
+ 			MPI_Abort(MPI_COMM_WORLD,-1);
+			return 1;
+		}
+	   	send_recv_and_recv_send =dlsym(din_library,"send_recv_and_recv_send");
+		if (!async_one_to_one){
+			//если ошибка, то вывести ее на экран
+			fprintf(stderr,"dlopen() error: %s\n", dlerror());
+ 			MPI_Abort(MPI_COMM_WORLD,-1);
+			return 1;
+		}
+           	(*send_recv_and_recv_send)(times,tmp_mes_size,test_parameters.num_repeats);*/
+
+
+
             send_recv_and_recv_send(times,tmp_mes_size,test_parameters.num_repeats);
         } /* end send_recv_and_recv_send */
 
@@ -402,11 +556,58 @@ int main(int argc,char **argv)
 
         if(test_parameters.test_type==PUT_ONE_TO_ONE_TEST_TYPE)
         {
+
+/*
+	int (*put_one_to_one)(Test_time_result_type *times,int mes_length,int num_repeats);
+		char *HOME = getenv("INSTALL_DIR");
+	   	din_library = dlopen(("%s/lib/din/libput2.so",HOME),RTLD_LAZY);
+	   	if (!din_library){
+			//если ошибка, то вывести ее на экран
+			fprintf(stderr,"dlopen() error: %s\n", dlerror());
+ 			MPI_Abort(MPI_COMM_WORLD,-1);
+			return 1;
+		}
+	   	put_one_to_one =dlsym(din_library,"put_one_to_one");
+		if (!put_one_to_one){
+			//если ошибка, то вывести ее на экран
+			fprintf(stderr,"dlopen() error: %s\n", dlerror());
+ 			MPI_Abort(MPI_COMM_WORLD,-1);
+			return 1;
+		}
+           	(*put_one_to_one)(times,tmp_mes_size,test_parameters.num_repeats);*/
+
+
+
+
+
 		put_one_to_one(times,tmp_mes_size,test_parameters.num_repeats);
         } /* end put_one_to_one */
 
         if(test_parameters.test_type==GET_ONE_TO_ONE_TEST_TYPE)
         {
+
+/*
+	int (*put_one_to_one)(Test_time_result_type *times,int mes_length,int num_repeats);
+		char *HOME = getenv("INSTALL_DIR");
+	   	din_library = dlopen(("%s/lib/din/libget2.so",HOME),RTLD_LAZY);
+	   	if (!din_library){
+			//если ошибка, то вывести ее на экран
+			fprintf(stderr,"dlopen() error: %s\n", dlerror());
+ 			MPI_Abort(MPI_COMM_WORLD,-1);
+			return 1;
+		}
+	   	get_one_to_one =dlsym(din_library,"get_one_to_one");
+		if (!get_one_to_one){
+			//если ошибка, то вывести ее на экран
+			fprintf(stderr,"dlopen() error: %s\n", dlerror());
+ 			MPI_Abort(MPI_COMM_WORLD,-1);
+			return 1;
+		}
+           	(*get_one_to_one)(times,tmp_mes_size,test_parameters.num_repeats);*/
+
+
+
+
 		get_one_to_one(times,tmp_mes_size,test_parameters.num_repeats);
         } /* end get_one_to_one */
 
@@ -447,15 +648,15 @@ int main(int argc,char **argv)
             if(netcdf_write_matrix(netcdf_file_me,netcdf_var_me,step_num,mtr_me.sizex,mtr_me.sizey,mtr_me.body))
             {
                 printf("Can't write median matrix to file.\n");
-                MPI_Abort(MPI_COMM_WORLD,-1);
+                MPI_Abort(MPI_COMM_WORLD,-1); 
                 return 1;
             }
 
             if(netcdf_write_matrix(netcdf_file_di,netcdf_var_di,step_num,mtr_di.sizex,mtr_di.sizey,mtr_di.body))
             {
                 printf("Can't write deviation matrix to file.\n");
-                MPI_Abort(MPI_COMM_WORLD,-1);
-                return 1;
+                MPI_Abort(MPI_COMM_WORLD,-1);                
+		return 1;
             }
 
             if(netcdf_write_matrix(netcdf_file_mi,netcdf_var_mi,step_num,mtr_mi.sizex,mtr_mi.sizey,mtr_mi.body))

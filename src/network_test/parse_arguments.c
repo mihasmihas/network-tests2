@@ -182,7 +182,7 @@ int parse_network_test_arguments(int argc,char **argv,struct network_test_parame
             break;
         case 't':
             if ( ( parameters->test_type = get_test_type(optarg) ) == UNKNOWN_TEST_TYPE )
-                parameters->test_type = ONE_TO_ONE_TEST_TYPE;
+            parameters->test_type = ONE_TO_ONE_TEST_TYPE;
 			break;
         case 'v':
 			printf("Version: %s\n",PARUS_VERSION);
