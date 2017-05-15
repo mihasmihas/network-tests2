@@ -21,7 +21,6 @@ int create_netcdf_header
 	int netcdf_file_id;
 
 	int x_dim_id, y_dim_id, num_matrices_dim_id, strings_dim_id;
-
 	int num_procs_var_id, test_type_var_id, file_data_type_var_id, begin_message_length_var_id, end_message_length_var_id;
 	int step_length_var_id, num_repeats_var_id;
 	int noise_mesage_length_var_id, num_noise_messages_var_id, num_noise_procs_var_id;	
@@ -73,36 +72,41 @@ int create_netcdf_header
 		return NETCDF_ERROR;
 	}
 	
+
+
+	// вот здесь надо разбираться по поводу добавления имени теста , а не числа теста
+
+
 	/*
          * For future
          */
-	/*
 	if(nc_def_var(netcdf_file_id,"test_type",NC_CHAR,1,&strings_dim_id,&test_type_var_id)!=NC_NOERR)
         {
                 return NETCDF_ERROR;
         }
-        */
-
+        
+/*
 	if(nc_def_var(netcdf_file_id,"test_type",NC_INT,0,0,&test_type_var_id)!=NC_NOERR)
         {
                 return NETCDF_ERROR;
         }
-
+*/
 	/*
          * For future
          */
-	/*
+
+	
 	if(nc_def_var(netcdf_file_id,"data_type",NC_CHAR,1,&strings_dim_id,&file_data_type_var_id)!=NC_NOERR)
         {
                 return NETCDF_ERROR;
         }
-        */
-
+        
+/*
 	if(nc_def_var(netcdf_file_id,"data_type",NC_INT,0,0,&file_data_type_var_id)!=NC_NOERR)
         {
                 return NETCDF_ERROR;
         }
-
+*/
 	if(nc_def_var(netcdf_file_id,"begin_mes_length",NC_INT,0,0,&begin_message_length_var_id)!=NC_NOERR)
         {
                 return NETCDF_ERROR;
@@ -155,16 +159,44 @@ int create_netcdf_header
 	{
 		return NETCDF_ERROR;
 	}
-
+/*
 	if(nc_put_var_int(netcdf_file_id,test_type_var_id,&test_parameters->test_type)!=NC_NOERR)
 	{
 		return NETCDF_ERROR;
 	}
-
+	*/
+	char * test_name=NULL;
+	test_name = (char*)malloc(sizeof(char)*(100));
+	if (get_test_type_name(test_parameters->test_type, test_name)!=0)
+	{
+		free(test_name);
+		return NETCDF_ERROR;
+	}
+	if(nc_put_var_text(netcdf_file_id,test_type_var_id,test_name)!=NC_NOERR)
+	{
+		free(test_name);
+		return NETCDF_ERROR;
+	}
+	free(test_name);
+	
+/*
 	if(nc_put_var_int(netcdf_file_id,file_data_type_var_id,&file_data_type)!=NC_NOERR)
 	{
 		return NETCDF_ERROR;
 	}
+*/
+	char *data_name=NULL;
+	data_name = (char*)malloc(sizeof(char)*(100));
+	if (get_data_type_name(file_data_type, data_name)!=0)
+	{
+		free(data_name);
+		return NETCDF_ERROR;
+	}
+	if(nc_put_var_text(netcdf_file_id,file_data_type_var_id,data_name)!=NC_NOERR)
+	{
+		return NETCDF_ERROR;
+	}
+	free(data_name);
 
 	if(nc_put_var_int(netcdf_file_id,begin_message_length_var_id,&test_parameters->begin_message_length)!=NC_NOERR)
 	{
@@ -218,8 +250,12 @@ int netcdf_write_matrix
 	const double *data
 )
 {
-	size_t start[3]={matrix_number_in_file,0,0};
-	size_t count[3]={1,size_x,size_y};
+	//size_t start[3]={matrix_number_in_file,0,0};
+	//size_t count[3]={1,size_x,size_y};
+	
+	size_t start[3]={matrix_number_in_file,size_x,0};
+	size_t count[3]={1,1,size_y};
+
 	if(nc_put_vara_double(netcdf_file_id,netcdf_var_id,start,count,data)!=NC_NOERR)
 	{
 		return NETCDF_ERROR;

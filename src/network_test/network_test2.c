@@ -40,6 +40,7 @@
 #include <stdio.h>
 #include <dlfcn.h>
 
+
 #ifdef _GNU_SOURCE
 #include <getopt.h>
 #else
@@ -58,22 +59,22 @@
 #include "tests_common.h"
 #include "parse_arguments.h"
 
-int comm_size;
-int comm_rank;
+int comm_size; //константа отвещающая за число процесов задействованных в программе
+int comm_rank; // константа отвещающая за номер процесса 
 
 
 
 int main(int argc,char **argv)
 {
-    MPI_Status status;
-    void *din_library;
-    Test_time_result_type *times=NULL; /* old px_my_time_type *times=NULL;*/
+    MPI_Status status; //структура, содержащая следующие поля: MPI_SOURCE (источник), MPI_TAG (метка), MPI_ERROR (ошибка). определяет статус сообщения 
 
+    Test_time_result_type *times=NULL; /* old px_my_time_type *times=NULL;*/ //отвечает за время работы программы
+     
     /*
      * The structure with network_test parameters.
      */
     struct network_test_parameters_struct test_parameters;
-
+    struct network_test_parametrs_of_types types_parameters;
     /*
      * NetCDF file_id for:
      *  average
@@ -111,11 +112,11 @@ int main(int argc,char **argv)
     Easy_matrix mtr_mi;
 
 
-    char test_type_name[100];
-    int i,j;
+    char test_type_name[100]; // имя теста 
+    int i,j; // положение в матрице
 
 
-    char** host_names=NULL;
+    char** host_names=NULL; 
     char host_name[256];
 
 
@@ -133,11 +134,11 @@ int main(int argc,char **argv)
     */
 
 
-    int tmp_mes_size;
+    int tmp_mes_size; // длина сообщения ?
 
     /*Variables for MPI struct datatype creating*/
     MPI_Datatype struct_types[4]= {MPI_DOUBLE,MPI_DOUBLE,MPI_DOUBLE,MPI_DOUBLE};
-    MPI_Datatype MPI_My_time_struct;
+    MPI_Datatype MPI_My_time_struct; 
     int blocklength[4]= {1,1,1,1/*,1*/};
     MPI_Aint displace[4],base;
 
@@ -146,22 +147,34 @@ int main(int argc,char **argv)
     MPI_Init(&argc,&argv);
     MPI_Comm_size(MPI_COMM_WORLD,&comm_size);
     MPI_Comm_rank(MPI_COMM_WORLD,&comm_rank);
-
-    if(comm_rank == 0)
+    if(comm_rank == 0) // 
     {
-        if ( comm_size == 1 )
-        {
+        if ( comm_size == 1 ) // бессмысленное использование  программы
+         {
             error_flag = 1;
             printf( "\n\nYou tries to run this programm for one MPI thread!\n\n" );
         }
 
-        if(parse_network_test_arguments(argc,argv,&test_parameters))
+        if(parse_network_test_arguments(argc,argv,&test_parameters)) // идем парсить нашу строку определяет \
+        type \
+        file \
+        num_iterations\
+        begin \
+        end   \
+        step \
+        length_noise_message  \
+        num_noise_message   \
+        progs_noise \
+        version \
+        help   \
+        resume \
+        ignore 
         {
             MPI_Abort(MPI_COMM_WORLD,-1);
             return -1;
         }
 
-        host_names = (char**)malloc(sizeof(char*)*comm_size);
+        host_names = (char**)malloc(sizeof(char*)*comm_size);  //  не знаю пока что это ??? скорее всего названия тестов или имена файлов , первое скорее всего
         if(host_names==NULL)
         {
             printf("Can't allocate memory %d bytes for host_names\n",(int)(sizeof(char*)*comm_size));
@@ -181,15 +194,16 @@ int main(int argc,char **argv)
     } /* End if(rank==0) */
 
     /*
-     * Going to get and write all processors' hostnames
+     * Going to get and write all processors' hostnames // какая-то дичь по записи именов всех имен сообщение   и обработка по одному 
      */
     gethostname( host_name, 255 );
 
     if ( comm_rank == 0 )
     {
         for ( i = 1; i < comm_size; i++ )
-            MPI_Recv( host_names[i], 256, MPI_CHAR, i, 200, MPI_COMM_WORLD, &status );
+			MPI_Recv( host_names[i], 256, MPI_CHAR, i, 200, MPI_COMM_WORLD, &status );
         strcpy(host_names[0],host_name);
+		
     }
     else
     {
@@ -208,35 +222,35 @@ int main(int argc,char **argv)
          * Matrices initialization
          *
          */
-        flag = easy_mtr_create(&mtr_av,comm_size,comm_size);
+        flag = easy_mtr_create(&mtr_av,0,comm_size); //создаем матрицу 
         if( flag==-1 )
         {
             printf("Can not to create average matrix to story the test results\n");
             MPI_Abort(MPI_COMM_WORLD,-1);
             return -1;
         }
-        flag = easy_mtr_create(&mtr_me,comm_size,comm_size);
+        flag = easy_mtr_create(&mtr_me,0,comm_size);
         if( flag==-1 )
         {
             printf("Can not to create median matrix to story the test results\n");
             MPI_Abort(MPI_COMM_WORLD,-1);
             return -1;
         }
-        flag = easy_mtr_create(&mtr_di,comm_size,comm_size);
+        flag = easy_mtr_create(&mtr_di,0,comm_size);
         if( flag==-1 )
         {
             printf("Can not to create deviation matrix to story the test results\n");
             MPI_Abort(MPI_COMM_WORLD,-1);
             return -1;
         }
-        flag = easy_mtr_create(&mtr_mi,comm_size,comm_size);
+        flag = easy_mtr_create(&mtr_mi,0,comm_size);
         if( flag==-1 )
         {
             printf("Can not to create min values matrix to story  the test results\n");
             MPI_Abort(MPI_COMM_WORLD,-1);
             return -1;
         }
-
+        
         if(create_netcdf_header(AVERAGE_NETWORK_TEST_DATATYPE,&test_parameters,&netcdf_file_av,&netcdf_var_av))
         {
             printf("Can not to create file with name \"%s_average.nc\"\n",test_parameters.file_name_prefix);
@@ -250,6 +264,7 @@ int main(int argc,char **argv)
             MPI_Abort(MPI_COMM_WORLD,-1);
             return -1;
         }
+
 
         if(create_netcdf_header(DEVIATION_NETWORK_TEST_DATATYPE,&test_parameters,&netcdf_file_di,&netcdf_var_di))
         {
@@ -265,6 +280,7 @@ int main(int argc,char **argv)
             return -1;
         }
 
+	
 	if(create_test_hosts_file(&test_parameters,host_names))		
 	{
 		printf("Can not to create file with name \"%s_hosts.txt\"\n",test_parameters.file_name_prefix);
@@ -287,6 +303,8 @@ int main(int argc,char **argv)
         printf("\tnumber of noise messages\t%d\n",test_parameters.num_noise_messages);
         printf("\tnumber of noise processes\t%d\n",test_parameters.num_noise_procs);
         printf("\tnumber of repeates\t\t%d\n",test_parameters.num_repeats);
+	printf("\tdependence of noise processes\t%d\n",test_parameters.dep_noise_procs);
+	printf("\tstep degree\t\t\t%d\n",test_parameters.pow_step_length);
         printf("\tresult file average\t\t\"%s_average.nc\"\n",test_parameters.file_name_prefix);
         printf("\tresult file median\t\t\"%s_median.nc\"\n",test_parameters.file_name_prefix);
         printf("\tresult file deviation\t\t\"%s_deviation.nc\"\n",test_parameters.file_name_prefix);
@@ -334,353 +352,127 @@ int main(int argc,char **argv)
 		return -1;
     }
 
-    MPI_Barrier(MPI_COMM_WORLD);
-    
+    MPI_Barrier(MPI_COMM_WORLD); //синхронизация процессов 
+
 
     /*
      * Circle by length of messages
      */
+
+
     for
 	    (
 	     tmp_mes_size=test_parameters.begin_message_length;
 	     tmp_mes_size<test_parameters.end_message_length;
-	     step_num++,tmp_mes_size+=test_parameters.step_length
+	     step_num++
 	     )
+	     // изменение длины сообщения нелинейно менять здесь,\
+	      надо узнать по поводу других способов изменения \
+	      кроме линейного , дело получаса менять  
     {
-        if(test_parameters.test_type==ALL_TO_ALL_TEST_TYPE)
-        {
-	 /*  void *din_library;
-	   extern int (*all_to_all)(Test_time_result_type *times,int mes_length,int num_repeats);
-	   din_library = dlopen("$(INSTALL_DIR)/lib/din/liball_to_all2.so",RTLD_LAZY);
-	   if (!din_library){
+  	    void *library_handler;
+	    int (*test)(struct network_test_parametrs_of_types types_parameters);
+	    char *adress=NULL; 
+	    get_test_type_name(test_parameters.test_type,test_type_name);
+	    adress = (char*)malloc(sizeof(char)*(strlen(getenv("PWD"))+13+strlen(test_type_name)));
+	    strcpy(adress,getenv("PWD"));
+	    strcat(adress,"/lib/lib");    
+	    strcat(adress,test_type_name);
+	    strcat(adress,"2.so");
+	    library_handler =dlopen(adress,RTLD_LAZY || RTLD_GLOBAL);
+	    types_parameters.times=times;
+	    types_parameters.mes_length=tmp_mes_size;
+	    types_parameters.num_repeats=test_parameters.num_repeats;
+	    types_parameters.num_noise_repeats=test_parameters.num_noise_messages;
+	    types_parameters.noise_message_length=test_parameters.noise_message_length;
+	    types_parameters.num_noise_procs=test_parameters.num_noise_procs;
+	    types_parameters.dep_noise_procs=test_parameters.dep_noise_procs;
+	
+	    if(!library_handler)
+	    {
 		//если ошибка, то вывести ее на экран
 		fprintf(stderr,"dlopen() error: %s\n", dlerror());
- 		MPI_Abort(MPI_COMM_WORLD,-1)
-		return 1;
-		}
-	   all_to_all =dlsym(din_library,"all_to_all");
-           (*all_to_all)(times,tmp_mes_size,test_parameters.num_repeats);
-	   dlclose(din_library);
-		*/
-		all_to_all(times,tmp_mes_size,test_parameters.num_repeats);
-        }
-        if(test_parameters.test_type==BCAST_TEST_TYPE)
+		exit(1); // в случае ошибки можно, например, закончить работу программы
+	    }
+	    test = dlsym(library_handler,test_type_name);
+            (*test)(types_parameters);	
+	    dlclose(library_handler);
+	    free(adress);
+
+
+
+		// по сути у нас конец выполнения теста и далее идет
+        MPI_Barrier(MPI_COMM_WORLD); //синхронизация процессов
+
+
+
+        if(comm_rank==0) //  если процесс главный ?
         {
-
-		
-/*
-	int (* bcast)(Test_time_result_type *times,int mes_length,int num_repeats);
-		char *HOME = getenv("INSTALL_DIR");
-	   	din_library = dlopen(("%s/lib/din/lib bcast2.so",HOME),RTLD_LAZY);
-	   	if (!din_library){
-			//если ошибка, то вывести ее на экран
-			fprintf(stderr,"dlopen() error: %s\n", dlerror());
- 			MPI_Abort(MPI_COMM_WORLD,-1);
-			return 1;
-		}
-	   	async_one_to_one =dlsym(din_library," bcast");
-		if (! bcast){
-			//если ошибка, то вывести ее на экран
-			fprintf(stderr,"dlopen() error: %s\n", dlerror());
- 			MPI_Abort(MPI_COMM_WORLD,-1);
-			return 1;
-		}
-           	(* bcast)(times,tmp_mes_size,test_parameters.num_repeats);*/
-
-
-            bcast(times,tmp_mes_size,test_parameters.num_repeats);
-        }
-
-        if(test_parameters.test_type==NOISE_BLOCKING_TEST_TYPE)
-        {
-
-
-/*
-		void *din_library;
-	  	int (*test_noise_blocking)(Test_time_result_type *times,int mes_length, int num_repeats, int num_noise_repeats, int noise_message_length, int num_noise_procs);
-		char *HOME = getenv("INSTALL_DIR");
-	   	din_library = dlopen(("%s/lib/din/libtest_noise_blocking2.so",HOME),RTLD_LAZY);
-	   	if (!din_library){
-			//если ошибка, то вывести ее на экран
-			fprintf(stderr,"dlopen() error: %s\n", dlerror());
- 			MPI_Abort(MPI_COMM_WORLD,-1);
-			return 1;
-		}
-	   	
-                test_noise_blocking =dlsym(din_library,"test_noise_blocking");
-           	(*test_noise_blocking)(
-			 	times,
-				tmp_mes_size, 
-				test_parameters.num_repeats, 
-				test_parameters.num_noise_messages, 
-				test_parameters.noise_message_length,
-				test_parameters.num_noise_procs
-			);
-	   	dlclose(din_library);
-
-*/
-
-
-                test_noise_blocking
-		(
-		 	times,
-		    	tmp_mes_size, 
-			test_parameters.num_repeats, 
-			test_parameters.num_noise_messages, 
-			test_parameters.noise_message_length,
-		       	test_parameters.num_noise_procs
-		);
-        }
-
-        if(test_parameters.test_type==NOISE_TEST_TYPE)
-        {
-
-
-/*
-		void *din_library;
-	  	int (*test_noise)(Test_time_result_type *times,int mes_length, int num_repeats, int num_noise_repeats, int noise_message_length, int num_noise_procs);
-		char *HOME = getenv("INSTALL_DIR");
-	   	din_library = dlopen(("%s/lib/din/libtest_noise2.so",HOME),RTLD_LAZY);
-	   	if (!din_library){
-			//если ошибка, то вывести ее на экран
-			fprintf(stderr,"dlopen() error: %s\n", dlerror());
- 			MPI_Abort(MPI_COMM_WORLD,-1);
-			return 1;
-		}
-	   	test_noise =dlsym(din_library,"test_noise");
-           	(*test_noise)(
-			 	times,
-				tmp_mes_size, 
-				test_parameters.num_repeats, 
-				test_parameters.num_noise_messages, 
-				test_parameters.noise_message_length,
-				test_parameters.num_noise_procs
-			);
-	   	dlclose(din_library);
-
-*/
-
-
-            		test_noise
-			(
-			 	times,
-				tmp_mes_size, 
-				test_parameters.num_repeats, 
-				test_parameters.num_noise_messages, 
-				test_parameters.noise_message_length,
-				test_parameters.num_noise_procs
-			);
-        }
-
-        if(test_parameters.test_type==ONE_TO_ONE_TEST_TYPE)
-        {
-	/*
-	  	int (*one_to_one)(Test_time_result_type *times,int mes_length,int num_repeats);
-		char *HOME = getenv("INSTALL_DIR");
-	   	din_library = dlopen(("%s/lib/din/libone_to_one2.so",HOME),RTLD_LAZY);
-	   	if (!din_library){
-			//если ошибка, то вывести ее на экран
-			fprintf(stderr,"dlopen() error: %s\n", dlerror());
- 			MPI_Abort(MPI_COMM_WORLD,-1);
-			return 1;
-		}
-	   	one_to_one =dlsym(din_library,"one_to_one");
-		if (!one_to_one){
-			//если ошибка, то вывести ее на экран
-			fprintf(stderr,"dlopen() error: %s\n", dlerror());
- 			MPI_Abort(MPI_COMM_WORLD,-1);
-			return 1;
-		}
-           	(*one_to_one)(times,tmp_mes_size,test_parameters.num_repeats);
-	   	
-*/
-
-           one_to_one(times,tmp_mes_size,test_parameters.num_repeats);
-        } /* end one_to_one */
-
-        if(test_parameters.test_type==ASYNC_ONE_TO_ONE_TEST_TYPE)
-        {
-
-/*
-	int (*async_one_to_one)(Test_time_result_type *times,int mes_length,int num_repeats);
-		char *HOME = getenv("INSTALL_DIR");
-	   	din_library = dlopen(("%s/lib/din/libasync_one_to_one2.so",HOME),RTLD_LAZY);
-	   	if (!din_library){
-			//если ошибка, то вывести ее на экран
-			fprintf(stderr,"dlopen() error: %s\n", dlerror());
- 			MPI_Abort(MPI_COMM_WORLD,-1);
-			return 1;
-		}
-	   	async_one_to_one =dlsym(din_library,"async_one_to_one");
-		if (!async_one_to_one){
-			//если ошибка, то вывести ее на экран
-			fprintf(stderr,"dlopen() error: %s\n", dlerror());
- 			MPI_Abort(MPI_COMM_WORLD,-1);
-			return 1;
-		}
-           	(*async_one_to_one)(times,tmp_mes_size,test_parameters.num_repeats);*/
-
-            async_one_to_one(times,tmp_mes_size,test_parameters.num_repeats);
-        } /* end async_one_to_one */
-
-        if(test_parameters.test_type==SEND_RECV_AND_RECV_SEND_TEST_TYPE)
-        {
-
-
-/*
-	int (*send_recv_and_recv_send)(Test_time_result_type *times,int mes_length,int num_repeats);
-		char *HOME = getenv("INSTALL_DIR");
-	   	din_library = dlopen(("%s/lib/din/libsend_recv_and_recv_send2.so",HOME),RTLD_LAZY);
-	   	if (!din_library){
-			//если ошибка, то вывести ее на экран
-			fprintf(stderr,"dlopen() error: %s\n", dlerror());
- 			MPI_Abort(MPI_COMM_WORLD,-1);
-			return 1;
-		}
-	   	send_recv_and_recv_send =dlsym(din_library,"send_recv_and_recv_send");
-		if (!async_one_to_one){
-			//если ошибка, то вывести ее на экран
-			fprintf(stderr,"dlopen() error: %s\n", dlerror());
- 			MPI_Abort(MPI_COMM_WORLD,-1);
-			return 1;
-		}
-           	(*send_recv_and_recv_send)(times,tmp_mes_size,test_parameters.num_repeats);*/
-
-
-
-            send_recv_and_recv_send(times,tmp_mes_size,test_parameters.num_repeats);
-        } /* end send_recv_and_recv_send */
-
-
-
-
-        if(test_parameters.test_type==PUT_ONE_TO_ONE_TEST_TYPE)
-        {
-
-/*
-	int (*put_one_to_one)(Test_time_result_type *times,int mes_length,int num_repeats);
-		char *HOME = getenv("INSTALL_DIR");
-	   	din_library = dlopen(("%s/lib/din/libput2.so",HOME),RTLD_LAZY);
-	   	if (!din_library){
-			//если ошибка, то вывести ее на экран
-			fprintf(stderr,"dlopen() error: %s\n", dlerror());
- 			MPI_Abort(MPI_COMM_WORLD,-1);
-			return 1;
-		}
-	   	put_one_to_one =dlsym(din_library,"put_one_to_one");
-		if (!put_one_to_one){
-			//если ошибка, то вывести ее на экран
-			fprintf(stderr,"dlopen() error: %s\n", dlerror());
- 			MPI_Abort(MPI_COMM_WORLD,-1);
-			return 1;
-		}
-           	(*put_one_to_one)(times,tmp_mes_size,test_parameters.num_repeats);*/
-
-
-
-
-
-		put_one_to_one(times,tmp_mes_size,test_parameters.num_repeats);
-        } /* end put_one_to_one */
-
-        if(test_parameters.test_type==GET_ONE_TO_ONE_TEST_TYPE)
-        {
-
-/*
-	int (*put_one_to_one)(Test_time_result_type *times,int mes_length,int num_repeats);
-		char *HOME = getenv("INSTALL_DIR");
-	   	din_library = dlopen(("%s/lib/din/libget2.so",HOME),RTLD_LAZY);
-	   	if (!din_library){
-			//если ошибка, то вывести ее на экран
-			fprintf(stderr,"dlopen() error: %s\n", dlerror());
- 			MPI_Abort(MPI_COMM_WORLD,-1);
-			return 1;
-		}
-	   	get_one_to_one =dlsym(din_library,"get_one_to_one");
-		if (!get_one_to_one){
-			//если ошибка, то вывести ее на экран
-			fprintf(stderr,"dlopen() error: %s\n", dlerror());
- 			MPI_Abort(MPI_COMM_WORLD,-1);
-			return 1;
-		}
-           	(*get_one_to_one)(times,tmp_mes_size,test_parameters.num_repeats);*/
-
-
-
-
-		get_one_to_one(times,tmp_mes_size,test_parameters.num_repeats);
-        } /* end get_one_to_one */
-
-
-        MPI_Barrier(MPI_COMM_WORLD);
-
-        if(comm_rank==0)
-        {
-            for(j=0; j<comm_size; j++)
+            
+            for(i=0; i<comm_size; i++) // теперь бегаем по всей остальной матрице 
             {
-                MATRIX_FILL_ELEMENT(mtr_av,0,j,times[j].average);
-                MATRIX_FILL_ELEMENT(mtr_me,0,j,times[j].median);
-                MATRIX_FILL_ELEMENT(mtr_di,0,j,times[j].deviation);
-                MATRIX_FILL_ELEMENT(mtr_mi,0,j,times[j].min);
-            }
-            for(i=1; i<comm_size; i++)
-            {
-
-                MPI_Recv(times,comm_size,MPI_My_time_struct,i,100,MPI_COMM_WORLD,&status);
+          
+                if (i!=0)
+                	MPI_Recv(times,comm_size,MPI_My_time_struct,i,100,MPI_COMM_WORLD,&status); // получаем сообщения о том что строки готовы? , немного не понимаю 
                 for(j=0; j<comm_size; j++)
                 {
-                    MATRIX_FILL_ELEMENT(mtr_av,i,j,times[j].average);
-                    MATRIX_FILL_ELEMENT(mtr_me,i,j,times[j].median);
-                    MATRIX_FILL_ELEMENT(mtr_di,i,j,times[j].deviation);
-                    MATRIX_FILL_ELEMENT(mtr_mi,i,j,times[j].min);
-
+                
+					
+                	MATRIX_FILL_ELEMENT(mtr_av,j,times[j].average);
+               	 	MATRIX_FILL_ELEMENT(mtr_me,j,times[j].median);
+                	MATRIX_FILL_ELEMENT(mtr_di,j,times[j].deviation);
+                	MATRIX_FILL_ELEMENT(mtr_mi,j,times[j].min);
                 }
+                
+                
+                
+            	if(netcdf_write_matrix(netcdf_file_av,netcdf_var_av,step_num,i,mtr_av.sizey,mtr_av.body))
+            	{
+             	   	printf("Can't write average matrix to file.\n");
+            	    MPI_Abort(MPI_COMM_WORLD,-1);
+                	return 1;
+         	   	}
+
+            	if(netcdf_write_matrix(netcdf_file_me,netcdf_var_me,step_num,i,mtr_me.sizey,mtr_me.body))
+            	{
+            	    printf("Can't write median matrix to file.\n");
+            	    MPI_Abort(MPI_COMM_WORLD,-1);
+            	    return 1;
+            	}
+
+            	if(netcdf_write_matrix(netcdf_file_di,netcdf_var_di,step_num,i,mtr_di.sizey,mtr_di.body))
+            	{
+            	    printf("Can't write deviation matrix to file.\n");
+            	    MPI_Abort(MPI_COMM_WORLD,-1);
+            	    return 1;
+            	}
+
+            	if(netcdf_write_matrix(netcdf_file_mi,netcdf_var_mi,step_num,i,mtr_mi.sizey,mtr_mi.body))
+            	{
+            	    printf("Can't write  matrix with minimal values to file.\n");
+            	    MPI_Abort(MPI_COMM_WORLD,-1);
+            	    return 1;
+            	}
+            	
             }
-
-
-            if(netcdf_write_matrix(netcdf_file_av,netcdf_var_av,step_num,mtr_av.sizex,mtr_av.sizey,mtr_av.body))
-            {
-                printf("Can't write average matrix to file.\n");
-                MPI_Abort(MPI_COMM_WORLD,-1);
-                return 1;
-            }
-
-            if(netcdf_write_matrix(netcdf_file_me,netcdf_var_me,step_num,mtr_me.sizex,mtr_me.sizey,mtr_me.body))
-            {
-                printf("Can't write median matrix to file.\n");
-                MPI_Abort(MPI_COMM_WORLD,-1); 
-                return 1;
-            }
-
-            if(netcdf_write_matrix(netcdf_file_di,netcdf_var_di,step_num,mtr_di.sizex,mtr_di.sizey,mtr_di.body))
-            {
-                printf("Can't write deviation matrix to file.\n");
-                MPI_Abort(MPI_COMM_WORLD,-1);                
-		return 1;
-            }
-
-            if(netcdf_write_matrix(netcdf_file_mi,netcdf_var_mi,step_num,mtr_mi.sizex,mtr_mi.sizey,mtr_mi.body))
-            {
-                printf("Can't write  matrix with minimal values to file.\n");
-                MPI_Abort(MPI_COMM_WORLD,-1);
-                return 1;
-            }
-
+			
 
             printf("message length %d finished\r",tmp_mes_size);
             fflush(stdout);
-
-        } /* end comm rank 0 */
+        } 
+		/* end comm rank 0 */
         else
         {
             MPI_Send(times,comm_size,MPI_My_time_struct,0,100,MPI_COMM_WORLD);
         }
-
-      
         /* end for cycle .
          * Now we  go to the next length of message that is used in
          * the test perfomed on multiprocessor.
          */
+	if (test_parameters.pow_step_length<=1)
+         tmp_mes_size+=test_parameters.step_length;
+	else
+	tmp_mes_size=test_parameters.begin_message_length+pow((double)test_parameters.step_length,(double)(test_parameters.pow_step_length*(step_num+1)));
     }
     
     /* TODO
@@ -690,7 +482,7 @@ int main(int argc,char **argv)
      * Times array should be moved from return value to the input argument
      * for any network_test.
      */
-    
+
 	free(times);
 
 
@@ -715,7 +507,6 @@ int main(int argc,char **argv)
 
         printf("\nTest is done\n");
     }
-
     MPI_Finalize();
     return 0;
 } /* main finished */

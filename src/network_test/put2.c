@@ -27,6 +27,7 @@
 #include "my_time.h"
 #include "my_malloc.h"
 #include "tests_common.h"
+#include "network_test2.h"
 
 extern int comm_rank;
 extern int comm_size;
@@ -34,8 +35,19 @@ extern int comm_size;
 Test_time_result_type real_put_one_to_one(int mes_length,int num_repeats,int source_proc,int dest_proc, MPI_Win *win);
 
 
-int put_one_to_one(Test_time_result_type *times,int mes_length,int num_repeats)
+int put(struct network_test_parametrs_of_types types_parameters)
 {
+
+ Test_time_result_type *times=types_parameters.times;
+    int mes_length=types_parameters.mes_length;
+    int num_repeats=types_parameters.num_repeats;
+    int num_noise_repeats=types_parameters.num_noise_repeats;
+    int noise_message_length=types_parameters.noise_message_length;
+    int num_noise_procs=types_parameters.num_noise_procs;
+
+
+    MPI_Comm_size(MPI_COMM_WORLD,&comm_size);
+    MPI_Comm_rank(MPI_COMM_WORLD,&comm_rank);
     int i;
     int pair[2];
 
@@ -52,7 +64,7 @@ int put_one_to_one(Test_time_result_type *times,int mes_length,int num_repeats)
     data_window=(char *)malloc(mes_length*sizeof(char));
     if(data_window==NULL)
     {
-        printf("proc %d from %d: Can not allocate memory %d*sizeof(char)\n",comm_rank,comm_size,mes_length);
+       // printf("proc %d from %d: Can not allocate memory %d*sizeof(char)\n",comm_rank,comm_size,mes_length);
         MPI_Abort(MPI_COMM_WORLD,-1);
         return -1;
     }
@@ -136,18 +148,12 @@ Test_time_result_type real_put_one_to_one(int mes_length,int num_repeats,int sou
 
 
 
-    if(source_proc==dest_proc)
-    {
-        times.average=0;
-        times.deviation=0;
-        times.median=0;
-        return times;
-    }
+  
 
     tmp_results=(px_my_time_type *)malloc(num_repeats*sizeof(px_my_time_type));
     if(tmp_results==NULL)
     {
-        printf("proc %d from %d: Can not allocate memory\n",comm_rank,comm_size);
+   //     printf("proc %d from %d: Can not allocate memory\n",comm_rank,comm_size);
         times.average=-1;
         return times;
     }
@@ -157,7 +163,7 @@ Test_time_result_type real_put_one_to_one(int mes_length,int num_repeats,int sou
     if(data==NULL)
     {
         free(tmp_results);
-        printf("proc %d from %d: Can not allocate memory\n",comm_rank,comm_size);
+    //    printf("proc %d from %d: Can not allocate memory\n",comm_rank,comm_size);
         times.average=-1;
         return times;
     }
@@ -177,10 +183,10 @@ Test_time_result_type real_put_one_to_one(int mes_length,int num_repeats,int sou
             time_end=px_my_cpu_time();
 
             tmp_results[i]=(time_end-time_beg);
-            /*
-             printf("process %d from %d:\n  Finished recive message length=%d from %d throug the time %ld\n",
-             comm_rank,comm_size,mes_length,i,tmp_results[i]);
-            */
+            
+      //       printf("process %d from %d:\n  Finished recive message length=%d from %d throug the time %ld\n",
+       //      comm_rank,comm_size,mes_length,i,tmp_results[i]);
+            
         }
     }
 

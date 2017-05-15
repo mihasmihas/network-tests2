@@ -23,6 +23,7 @@
 #include "my_time.h"
 #include "my_malloc.h"
 #include "tests_common.h"
+#include "network_test2.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -32,10 +33,21 @@
 extern int comm_rank;
 extern int comm_size;
 
-int all_to_all(Test_time_result_type *times,int mes_length,int num_repeats);
+int all_to_all(struct network_test_parametrs_of_types types_parameters);
 
-int all_to_all(Test_time_result_type *times,int mes_length,int num_repeats)
+int all_to_all(struct network_test_parametrs_of_types types_parameters)
 {
+    
+ Test_time_result_type *times=types_parameters.times;
+    int mes_length=types_parameters.mes_length;
+    int num_repeats=types_parameters.num_repeats;
+    int num_noise_repeats=types_parameters.num_noise_repeats;
+    int noise_message_length=types_parameters.noise_message_length;
+    int num_noise_procs=types_parameters.num_noise_procs;
+
+    MPI_Comm_size(MPI_COMM_WORLD,&comm_size);
+    MPI_Comm_rank(MPI_COMM_WORLD,&comm_rank);
+
     px_my_time_type **tmp_results=NULL;
     px_my_time_type time_beg,time_end;
     char **send_data=NULL;
@@ -170,10 +182,9 @@ int all_to_all(Test_time_result_type *times,int mes_length,int num_repeats)
             MPI_Waitany(comm_size,recv_request,&finished,&status);
             time_end=px_my_cpu_time();
             tmp_results[finished][i]=time_end-time_beg;
-            /*
-             printf("process %d from %d:\n  Finished recive message length=%d from %d throug the time %ld\n",
-             comm_rank,comm_size,mes_length,finished,times[finished]);
-            */
+            
+            // printf("process %d from %d:\n  Finished recive message length=%d from %d throug the time %ld\n", comm_rank,comm_size,mes_length,finished,times[finished]);
+            
         }
     }
 

@@ -28,7 +28,7 @@
 #include "my_time.h"
 #include "my_malloc.h"
 #include "tests_common.h"
-
+#include "network_test2.h"
 
 extern int comm_rank;
 extern int comm_size;
@@ -39,8 +39,19 @@ extern int comm_size;
 Test_time_result_type real_async_one_to_one(int mes_length,int num_repeats,int source_proc,int dest_proc);
 
 
-Test_time_result_type* async_one_to_one(Test_time_result_type *times,int mes_length,int num_repeats)
+Test_time_result_type* async_one_to_one(struct network_test_parametrs_of_types types_parameters)
 {
+
+ Test_time_result_type *times=types_parameters.times;
+    int mes_length=types_parameters.mes_length;
+    int num_repeats=types_parameters.num_repeats;
+    int num_noise_repeats=types_parameters.num_noise_repeats;
+    int noise_message_length=types_parameters.noise_message_length;
+    int num_noise_procs=types_parameters.num_noise_procs;
+
+
+    MPI_Comm_size(MPI_COMM_WORLD,&comm_size);
+    MPI_Comm_rank(MPI_COMM_WORLD,&comm_rank);
     int i;
     int pair[2];
 
@@ -100,7 +111,7 @@ Test_time_result_type* async_one_to_one(Test_time_result_type *times,int mes_len
 		{
           		break;
 		}
-        
+
 		if(send_proc==comm_rank)
         		real_async_one_to_one(mes_length,num_repeats,send_proc,recv_proc);
         	if(recv_proc==comm_rank)

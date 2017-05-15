@@ -67,7 +67,7 @@ clean:
 	rm -f *.o libparus_network.a
 
 .c.o:
-	 $(MPI_CC) $(MPI_CC_FLAGS) $(MPI_CC_INCLUDE) $(NETCDF_INCLUDE) -I ../..  -c $*.c -o $*.o
+	 $(MPI_CC) $(MPI_CC_FLAGS) $(MPI_CC_INCLUDE) $(NETCDF_INCLUDE)  -fPIC -rdynamic -I ../..  -c $*.c -o $*.o
 
 .cpp.o:
 	 $(MPI_CXX) $(MPI_CXX_FLAGS) $(MPI_CXX_INCLUDE) $(NETCDF_INCLUDE) -I ../..  -c $*.cpp -o $*.o

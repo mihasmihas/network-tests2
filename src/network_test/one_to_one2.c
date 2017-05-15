@@ -28,6 +28,7 @@
 #include "my_time.h"
 #include "my_malloc.h"
 #include "tests_common.h"
+#include "network_test2.h"
 
 
 extern int comm_rank;
@@ -35,8 +36,18 @@ extern int comm_size;
 
 Test_time_result_type real_one_to_one(int mes_length,int num_repeats,int source_proc,int dest_proc);
 
-int one_to_one(Test_time_result_type *times,int mes_length,int num_repeats)
+int one_to_one(struct network_test_parametrs_of_types types_parameters)
 {
+
+ Test_time_result_type *times=types_parameters.times;
+    int mes_length=types_parameters.mes_length;
+    int num_repeats=types_parameters.num_repeats;
+    int num_noise_repeats=types_parameters.num_noise_repeats;
+    int noise_message_length=types_parameters.noise_message_length;
+    int num_noise_procs=types_parameters.num_noise_procs;
+
+	MPI_Comm_size(MPI_COMM_WORLD,&comm_size);
+    MPI_Comm_rank(MPI_COMM_WORLD,&comm_rank);
     int i;
     int pair[2];
 
@@ -46,7 +57,7 @@ int one_to_one(Test_time_result_type *times,int mes_length,int num_repeats)
 
     MPI_Status status;
 
-    
+
     if(comm_rank==0)
     {
         for(i=0; i<comm_size*comm_size; i++)
@@ -92,7 +103,7 @@ int one_to_one(Test_time_result_type *times,int mes_length,int num_repeats)
             MPI_Recv(pair,2,MPI_INT,0,1,MPI_COMM_WORLD,&status);
             send_proc=pair[0];
             recv_proc=pair[1];
-            
+
 	    if(send_proc==-1)
                 break;
             if(send_proc==comm_rank)
@@ -122,18 +133,12 @@ Test_time_result_type real_one_to_one(int mes_length,int num_repeats,int source_
     px_my_time_type st_deviation;
     int tmp;
 
-    if(source_proc==dest_proc)
-    {
-        times.average=0;
-        times.deviation=0;
-        times.median=0;
-        return times;
-    }
+  
 
     tmp_results=(px_my_time_type *)malloc(num_repeats*sizeof(px_my_time_type));
     if(tmp_results==NULL)
     {
-        printf("proc %d from %d: Can not allocate memory\n",comm_rank,comm_size);
+        printf("proc %d from %d: Can not allocate memory1\n",comm_rank,comm_size);
         times.average=-1;
         return times;
     }
@@ -142,13 +147,41 @@ Test_time_result_type real_one_to_one(int mes_length,int num_repeats,int source_
     if(data==NULL)
     {
         free(tmp_results);
-        printf("proc %d from %d: Can not allocate memory\n",comm_rank,comm_size);
+        printf("proc %d from %d: Can not allocate memory2\n",comm_rank,comm_size);
         times.average=-1;
         return times;
     }
 
 
+  if(source_proc==dest_proc)
+    {
+ 	for(i=0; i<num_repeats; i++)
+    	{
+		time_beg=px_my_cpu_time();
+		MPI_Send(	data,
+        	                mes_length,
+        	                MPI_BYTE,
+        	                dest_proc,
+        	                0,
+        	                MPI_COMM_WORLD
+        	            );
+		MPI_Recv(	data,
+        	                mes_length,
+        	                MPI_BYTE,
+        	                source_proc,
+        	                0,
+        	                MPI_COMM_WORLD,
+        	                &status
+        	            );
 
+            	time_end=px_my_cpu_time();
+
+		MPI_Send(&comm_rank,1,MPI_INT,source_proc,100,MPI_COMM_WORLD);
+		MPI_Recv(&tmp,1,MPI_INT,dest_proc,100,MPI_COMM_WORLD,&status);
+		tmp_results[i]=(time_end-time_beg);
+	}
+    }
+else
     for(i=0; i<num_repeats; i++)
     {
 
@@ -163,11 +196,11 @@ Test_time_result_type real_one_to_one(int mes_length,int num_repeats,int source_
                         0,
                         MPI_COMM_WORLD
                     );
-
+	
             time_end=px_my_cpu_time();
-
+	
             MPI_Recv(&tmp,1,MPI_INT,dest_proc,100,MPI_COMM_WORLD,&status);
-
+	
             tmp_results[i]=(time_end-time_beg);
             /*
              printf("process %d from %d:\n  Finished recive message length=%d from %d throug the time %ld\n",
@@ -176,7 +209,6 @@ Test_time_result_type real_one_to_one(int mes_length,int num_repeats,int source_
         }
         if(comm_rank==dest_proc)
         {
-
             time_beg=px_my_cpu_time();
 
             MPI_Recv(	data,
@@ -199,7 +231,6 @@ Test_time_result_type real_one_to_one(int mes_length,int num_repeats,int source_
             */
         }
     }
-
     sum=0;
     for(i=0; i<num_repeats; i++)
     {

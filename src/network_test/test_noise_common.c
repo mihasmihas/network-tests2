@@ -1,12 +1,12 @@
 /*
  *  This file is a part of the PARUS project.
  *  Copyright (C) 2006  Alexey N. Salnikov
- *  
+ *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
- * 
+ *
  * This library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
@@ -15,14 +15,14 @@
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ *
  * Alexey N. Salnikov (salnikov@cmc.msu.ru)
  * Ivan Beloborodov
  *
  */
 
 #include "my_time.h"
-/*#include "line_dynamic_array.h" 
+/*#include "line_dynamic_array.h"
 #include "id.h"
 */
 
@@ -110,7 +110,7 @@ void clear_more_test_data( test_data* td, int i )
  */
 int alloc_test_data( test_data* td, int mes_length, int num_repeats, int loading, int num_processors )
 {
- 
+
 	if ( !( td->tmp_results = (px_my_time_type**)
 		malloc( comm_size * sizeof(px_my_time_type*) ) ) )
 	{
@@ -242,10 +242,10 @@ int random_choice( int proc1, int proc2, int num_processors, int* processors )
 	/*
 	 * Check for boundaries
 	 * /
-	if( 
+	if(
 		( comm_size <= 2 ) ||
 		( num_processors <= 0 ) ||
-		( num_processors > comm_size - 2 ) 
+		( num_processors > comm_size - 2 )
 	  )
 	{
 		return 0;
@@ -316,18 +316,20 @@ int init_mode_array(int proc1,int proc2,int num_noise_procs,int num_all_procs,in
 }
 */
 
-int init_mode_array(int proc1,int proc2,int num_noise_procs,int num_all_procs,int *mode_array)
+int init_mode_array(int proc1,int proc2,int num_noise_procs,int num_all_procs,int *mode_array, int dep_noise_procs)
 {	
 	// is num_all_procs==comm_size???? WTF??
 	int i;
-		
-	for(i=0;i<num_all_procs;i++)
+	
+	for(i=0;i<num_all_procs;i++) 
+	// создаем строку массива размером с комм_сайз(одна строка матрицы)\
+	и говорим что все они молчащие  
 	{
-		mode_array[i]=MODE_IDLE;
+		mode_array[i]=MODE_IDLE; 
 	}
-
-	mode_array[proc1]=MODE_GOAL_MESSAGES;
-	mode_array[proc2]=MODE_GOAL_MESSAGES;
+	
+	mode_array[proc1]=MODE_GOAL_MESSAGES; 	//выбираем два 
+	mode_array[proc2]=MODE_GOAL_MESSAGES;	//целевых процесса
 
 	/*
 
@@ -342,25 +344,30 @@ int init_mode_array(int proc1,int proc2,int num_noise_procs,int num_all_procs,in
 	}
 	*/
 	
-	if( 
+	if(
 		( num_all_procs <= 2 ) ||
 		( num_noise_procs <= 0 ) ||
-		( num_noise_procs > num_all_procs - 2 ) 
+		( num_noise_procs > num_all_procs - 2 )
 	  )
+	// если все процессы меньше двух или шумовых процессов меньше или равно 0 \
+	или разница шумовых процессов и всех процессов больше двух то выход 
 	{
 		return 0;
 	}
-
-	int r=0;
-	int k=(num_all_procs-2)/num_noise_procs;
+	
+	int r=0; 
+	if (dep_noise_procs<1)
+	dep_noise_procs=(num_all_procs-2)/num_noise_procs; 
+	// к равно количеству всех процессов -2\
+	 деленных на количество шумящих процессов 
 	for ( i = 0; i < num_noise_procs; i++ )
 	{
 		while((r==proc1)||(r==proc2))
 			r++;
 		mode_array[r]=MODE_NOISE_MESSAGES;
-		r+=k;
+		r+=dep_noise_procs;
+		r%=num_all_procs;
 	}
-
 	
 	return 0;
 }

@@ -28,15 +28,25 @@
 #include "my_time.h"
 #include "my_malloc.h"
 #include "tests_common.h"
-
+#include "network_test2.h"
 
 extern int comm_rank;
 extern int comm_size;
 
-Test_time_result_type *bcast(Test_time_result_type *times, int mes_length, int num_repeats);
+Test_time_result_type *bcast(struct network_test_parametrs_of_types types_parameters);
 
-Test_time_result_type *bcast(Test_time_result_type *times, int mes_length, int num_repeats)
+Test_time_result_type *bcast(struct network_test_parametrs_of_types types_parameters)
 {
+
+ Test_time_result_type *times=types_parameters.times;
+    int mes_length=types_parameters.mes_length;
+    int num_repeats=types_parameters.num_repeats;
+    int num_noise_repeats=types_parameters.num_noise_repeats;
+    int noise_message_length=types_parameters.noise_message_length;
+    int num_noise_procs=types_parameters.num_noise_procs;
+
+MPI_Comm_size(MPI_COMM_WORLD,&comm_size);
+    MPI_Comm_rank(MPI_COMM_WORLD,&comm_rank);
     px_my_time_type **tmp_results=NULL;
     px_my_time_type time_beg,time_end;
     char *data=NULL;

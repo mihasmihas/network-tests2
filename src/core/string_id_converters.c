@@ -46,6 +46,31 @@ int get_test_type(const char *str)
     return UNKNOWN_TEST_TYPE;
 }
 
+int get_data_type_name(const int data_type,char *str)
+{
+    if(str==NULL) return -1;
+    switch(data_type)
+    {
+    case AVERAGE_NETWORK_TEST_DATATYPE:
+        strcpy(str,"average");
+        break;
+    case MEDIAN_NETWORK_TEST_DATATYPE:
+        strcpy(str,"median");
+        break;
+    case DEVIATION_NETWORK_TEST_DATATYPE:
+        strcpy(str,"deviation");
+        break;
+    case MIN_NETWORK_TEST_DATATYPE:
+        strcpy(str,"min");
+        break;
+
+    default:
+        strcpy(str,"unknown_datatype");
+        break;
+    }
+    return 0;
+}
+
 int get_test_type_name(int test_type,char *str)
 {
     if(str==NULL) return -1;

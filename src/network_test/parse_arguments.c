@@ -19,6 +19,8 @@
 #define NOISE_MESSAGE_LENGTH 0
 #define NOISE_MESSAGE_NUM 1
 #define NUM_NOISE_PROCS 0
+#define DEP_NOISE_PROCS 0 
+#define POW_STEP_LENGTH 1
 
 #define VERSION_FLAG 1
 #define ERROR_FLAG   -1
@@ -39,7 +41,9 @@ int print_network_test_help_message(void)
            "\t\t\t[{ -l | --length_noise_message } <length> ]\n"
            "\t\t\t[{ -m | --num_noise_message } <number of noise messages> ]\n"
            "\t\t\t[{ -p | --procs_noise } <number of noise MPI processes> ]\n"
+ 	   "\t\t\t[{ -d | --dep_noise } <dependence of noise MPI processes > ]\n"
            "\t\t\t[{ -n | --num_iterations } <number of iterations> ]\n"
+	   "\t\t\t[{ -o | --pow_step } <step degree> ]\n"
            "\t\t\t[{ -h | --help }]\n"
            "\t\t\t[{ -v | --version }]\n","network_test2");
 #else
@@ -53,6 +57,8 @@ int print_network_test_help_message(void)
            "\t\t\t[ -l <noise message length> ]\n"
            "\t\t\t[ -m <number of noise message> ]\n"
            "\t\t\t[ -p <number of noise processes> ]\n"
+	   "\t\t\t[ -d <dependence of noise MPI processes > ]\n"
+	   "\t\t\t[ -o <step degree> ]\n"
            "\t\t\t[ -n <number of iterations> ]\n"
            "\t\t\t[ -h ] - print help\n"
            "\t\t\t[ -v ] - print version\n","network_test2");
@@ -112,18 +118,20 @@ int parse_network_test_arguments(int argc,char **argv,struct network_test_parame
 
 	parameters->num_procs            =  0; /* Special for program break on any error */
 	parameters->test_type            =  ONE_TO_ONE_TEST_TYPE;
-    parameters->begin_message_length =  MESSAGE_BEGIN_LENGTH;
-    parameters->end_message_length   =  MESSAGE_END_LENGTH;
-    parameters->step_length          =  MESSAGE_STEP;
-    parameters->num_repeats          =  NUM_REPEATS;
-    parameters->noise_message_length  =  NOISE_MESSAGE_LENGTH;
-    parameters->num_noise_messages   =  NOISE_MESSAGE_NUM;
-    parameters->num_noise_procs      =  NUM_NOISE_PROCS;
-    parameters->file_name_prefix     =  default_file_name_prefix;
+    	parameters->begin_message_length =  MESSAGE_BEGIN_LENGTH;
+    	parameters->end_message_length   =  MESSAGE_END_LENGTH;
+    	parameters->step_length          =  MESSAGE_STEP;
+    	parameters->num_repeats          =  NUM_REPEATS;
+    	parameters->noise_message_length  =  NOISE_MESSAGE_LENGTH;
+    	parameters->num_noise_messages   =  NOISE_MESSAGE_NUM;
+    	parameters->num_noise_procs      =  NUM_NOISE_PROCS;
+	parameters->file_name_prefix     =  default_file_name_prefix;
+	parameters->dep_noise_procs      =  DEP_NOISE_PROCS;
+	parameters->pow_step_length      =  POW_STEP_LENGTH;
 
 #ifdef _GNU_SOURCE
 
-    struct option options[14]=
+    struct option options[15]=
     {
         {"type",required_argument,NULL,'t'},
         {"file",required_argument,NULL,'f'},
@@ -134,6 +142,8 @@ int parse_network_test_arguments(int argc,char **argv,struct network_test_parame
         {"length_noise_message",required_argument,NULL,'l'},
         {"num_noise_message",required_argument,NULL,'m'},
         {"procs_noise",required_argument,NULL,'p'},
+	{"dep_noise",required_argument,NULL,'d'},
+	{"pow_step",required_argument,NULL,'o'},
         {"version",no_argument,NULL,'v'},
         {"help",no_argument,NULL,'h'},
         {"resume",no_argument,NULL,'r'},
@@ -145,10 +155,10 @@ int parse_network_test_arguments(int argc,char **argv,struct network_test_parame
     for ( ; ; )
     {
 #ifdef _GNU_SOURCE
-        arg_val = getopt_long(argc,argv,"t:f:n:b:e:s:l:m:p:h:v:r:i",options,NULL);
+        arg_val = getopt_long(argc,argv,"t:f:n:b:e:s:l:m:p:d:h:o:v:r:i",options,NULL);
 #else
 
-        arg_val = getopt(argc,argv,"t:f:n:b:e:s:l:m:p:h:v:r:i");
+        arg_val = getopt(argc,argv,"t:f:n:b:e:s:l:m:p:d:h:o:v:r:i");
 #endif
 
         if ( arg_val== -1 )
@@ -164,6 +174,8 @@ int parse_network_test_arguments(int argc,char **argv,struct network_test_parame
             break;
         case 's':
             parameters->step_length = atoi(optarg);
+	case 'o':
+            parameters->pow_step_length = atoi(optarg);
             break;
         case 'l':
             parameters->noise_message_length = atoi(optarg);
@@ -177,12 +189,16 @@ int parse_network_test_arguments(int argc,char **argv,struct network_test_parame
         case 'n':
             parameters->num_repeats = atoi(optarg);
             break;
+	case 'd':
+            parameters->dep_noise_procs = atoi(optarg);
+            break;
+
         case 'f':
             parameters->file_name_prefix = optarg;
             break;
         case 't':
             if ( ( parameters->test_type = get_test_type(optarg) ) == UNKNOWN_TEST_TYPE )
-            parameters->test_type = ONE_TO_ONE_TEST_TYPE;
+                parameters->test_type = ONE_TO_ONE_TEST_TYPE;
 			break;
         case 'v':
 			printf("Version: %s\n",PARUS_VERSION);
